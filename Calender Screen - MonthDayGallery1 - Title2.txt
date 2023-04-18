@@ -1,0 +1,40 @@
+
+----------------------------------------------------------------------------------------
+Fill
+----------------------------------------------------------------------------------------
+/*Fill value changes if the gallery item day = today, or if it lies outside of the current month*/             
+If(
+    /*Date selected is today*/
+    DateAdd(_firstDayInView, ThisItem.Value) = Today() && DateAdd(_firstDayInView, ThisItem.Value) = _dateSelected, RGBA(0,0,0,0),
+    /*Today when it is not selected*/
+    DateAdd(_firstDayInView, ThisItem.Value) = Today(), ColorFade(Subcircle1.Fill, 0.67), 
+    /*The day is outside the range of the currently selected month*/
+    Abs(Self.Text - ThisItem.Value) > 10,RGBA(200, 200, 200, 0.3), RGBA(0, 0, 0, 0))
+
+
+----------------------------------------------------------------------------------------
+Visible
+----------------------------------------------------------------------------------------
+
+
+/*This item is in a row containing no days of the visible month. It is in the row after the row where the last day of the month occurs*/ 
+ !(DateAdd(_firstDayInView,ThisItem.Value,TimeUnit.Days) - Weekday(DateAdd(_firstDayInView,ThisItem.Value,TimeUnit.Days)) + 1 > _lastDayOfMonth)
+
+
+----------------------------------------------------------------------------------------
+onselect
+----------------------------------------------------------------------------------------
+//Set(_dateSelected, DateAdd(_firstDayInView, ThisItem.Value, TimeUnit.Days))
+
+If(DateAdd(_firstDayInView,ThisItem.Value)>=Today(),
+Select(Parent);
+Set(_dateSelected,DateAdd(_firstDayInView,ThisItem.Value,TimeUnit.Days)))
+
+
+----------------------------------------------------------------------------------------
+Color
+----------------------------------------------------------------------------------------
+
+//If(DateAdd(_firstDayInView, ThisItem.Value) = _dateSelected, RGBA(255, 255, 255, 1), DateAdd(_firstDayInView, //ThisItem.Value) = Today(), RGBA(40, 41, 43, 10), LblMonthSelected1.Color)
+
+If(DateAdd(_firstDayInView, ThisItem.Value) < Today(),ColorFade(RGBA(232,18,36,255),20%),RGBA(40,41,43,100))

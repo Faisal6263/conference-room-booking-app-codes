@@ -1,0 +1,171 @@
+Button -  Calendar screen
+
+
+Set(StartDateTime,ThisItem.Start);
+Set(EndDateTime,ThisItem.End);
+Set(StartDateTimeUTC,Text(DateAdd(StartDateTime, -TimeZoneOffset(),TimeUnit.Minutes),"yyyy-mm-ddThh:mm")&":00.000z");
+Set(EndDateTimeUTC,Text(DateAdd(EndDateTime, -TimeZoneOffset(),TimeUnit.Minutes),"yyyy-mm-ddThh:mm")&":00.000z");
+Navigate('Select Room Screen',ScreenTransition.CoverRight);
+
+Select room screen - on visible 
+
+ClearCollect(
+    AllRooms,
+    Office365Outlook.GetRoomsV2().value
+);
+//get All Rooms
+Set(
+    AllRoomsAddress,
+    Concat(
+        AllRooms,
+        address & ";"
+    )
+);
+//All Address (in collection of my rooms two info will save into table address and Name)
+
+ClearCollect(
+    FreeSlots,
+    Office365Outlook.FindMeetingTimesV2(
+        {
+            RequiredAttendees: AllRoomsAddress,
+            IsOrganizerOptional: true,
+            Start: StartDateTimeUTC,
+            End: EndDateTimeUTC,
+            MeetingDuration: DateDiff(
+                StartDateTime,
+                EndDateTime,
+                TimeUnit.Minutes
+            )
+        }
+    )
+);
+
+
+
+//Get FRee Slots of all rooms
+ClearCollect(
+    _MeetingTimeSuggetion,
+    First(FreeSlots).meetingTimeSuggestions
+);
+//Get meeting time suggestions
+ClearCollect(
+    _attendeeAvailability,
+    Filter(
+        First(_MeetingTimeSuggetion).attendeeAvailability,
+        availability = "free"
+    )
+);
+
+
+//Get Free Rooms
+ClearCollect(
+    AvailableRoomsEmails,
+    ForAll(
+        _attendeeAvailability,
+        attendee.emailAddress.address
+    )
+);
+
+//Get the Email Address from all the records in the table
+ClearCollect(
+    RoomDataSource,
+    AddColumns(
+        AvailableRoomsEmails,
+        "Name",
+        LookUp(
+            AllRooms,
+            address = Value
+        ).name
+    )
+);
+
+
+
+
+Confirmation screen -  on visible 
+
+Set(SelectedRoomEmail,RoomGallery.Selected.Value);
+
+//Set(varUserCalendarname2,LookUp(Office365Outlook.CalendarGetTablesV2().value, name = "Calendar").name);
+
+//Set(calid,LookUp(Office365Outlook.CalendarGetTablesV2().value, name="Calendar").id);
+
+
+Office365Outlook.V4CalendarPatchItem(
+    _myCalendar.Name,
+    CalendarEventsGallery1.Selected.Id,
+    CalendarEventsGallery1.Selected.Subject,
+    StartDateTime,
+    EndDateTime,
+    "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
+    {
+        resourceAttendees:Concat(ComboBox1_1.SelectedItems.Mail,Mail & ";"),
+        RequiredAttendees : SelectedRoomEmail,
+        location: RoomGallery.Selected.Name
+    }
+);
+
+/*Office365Outlook.V2CalendarPatchItem(LookUp(Office365Outlook.CalendarGetTables().value, DisplayName = "Calendar").Name,CalendarEventsGallery1.Selected.Id,CalendarEventsGallery1.Selected.Subject,StartDateTimeUTC,EndDateTimeUTC,{RequiredAttendees:SelectedRoomEmail,
+resourceAttendees:Concat(ComboBox1_1.SelectedItems.Mail,Mail & ";"),
+Location:RoomGallery.Selected.Name});*/
+
+/*Office365Outlook.V2CalendarPatchItem(_myCalendar.Name,CalendarEventsGallery1.Selected.Id,CalendarEventsGallery1.Selected.Subject,StartDateTimeUTC,EndDateTimeUTC,
+{RequiredAttendees:SelectedRoomEmail,
+ResourceAttendees: Concat(ComboBox1_1.SelectedItems.Mail,Mail & ";"),
+Location:RoomGallery.Selected.Name});*/
+
+//Concat(ComboBox1_1.SelectedItems.Mail,Mail & ";")
+
+
+//Office365Outlook.V2CalendarPatchItem(calendarId, itemId, subject, start, end, additionalProperties)
+
+/*Office365Outlook.V4CalendarPatchItem(LookUp(Office365Outlook.CalendarGetTables().value, DisplayName="Calendar").Name,CalendarEventsGallery1.Selected.Id,CalendarEventsGallery1.Selected.Subject,StartDateTimeUTC,EndDateTimeUTC,{RequiredAttendees:SelectedRoomEmail,Location:RoomGallery.Selected.Name});*/
+
+
+Working Meeting Screen -- Button
+
+
+ClearCollect(
+    colCalendars,
+    Office365Outlook.CalendarGetTablesV2()
+);
+
+//Set(varUserCalendarname,LookUp(Office365Outlook.CalendarGetTables().value, DisplayName = "Calendar").Name);
+
+/*Set(varUserCalendarId,LookUp(Office365Outlook.CalendarGetTablesV2().value, name="Calendar").id);*/
+
+Set(subject,Subjectinputtext_1.Text);
+
+Set(starttime,Text(startdatecombo_1.SelectedDate + Time
+    (Value(starthrdropdown_1.Selected.Value), 
+    Value(startmndropdown_1.Selected.Value),
+    0
+    ),
+    DateTimeFormat.UTC));
+
+Set(endtime,Text(enddatecombo_1.SelectedDate + Time
+    (Value(endhrdropdown_1.Selected.Value), 
+    Value(endmndropdown_1.Selected.Value),
+    0
+    ),
+    DateTimeFormat.UTC));
+
+
+Office365Outlook.V4CalendarPostItem(
+    _myCalendar.Name,
+    subject,
+    starttime, 
+    endtime, 
+    "(UTC) Coordinated Universal Time",
+{
+        body: bodydis_1.HtmlText,
+        requiredAttendees: Concat(ComboBox1_1.SelectedItems.Mail,Mail & ";"),
+        isReminderOn: true,
+        reminderMinutesBeforeStart: 15
+});
+
+
+
+Navigate(
+    'Select Room Screen',
+    ScreenTransition.Cover);

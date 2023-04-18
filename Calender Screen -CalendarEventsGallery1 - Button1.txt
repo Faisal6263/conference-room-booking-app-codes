@@ -1,0 +1,8 @@
+Set(StartDateTime,ThisItem.Start);
+Set(EndDateTime,ThisItem.End);
+Set(resourcei,ThisItem.RequiredAttendees);
+Set(requi,ThisItem.Location);
+Set(StartDateTimeUTC,Text(DateAdd(StartDateTime, TimeZoneOffset(),TimeUnit.Minutes),"yyyy-mm-ddThh:mm")&":00.000z");
+Set(EndDateTimeUTC,Text(DateAdd(EndDateTime, TimeZoneOffset(),TimeUnit.Minutes),"yyyy-mm-ddThh:mm")&":00.000z");
+Navigate('Select Room Screen',ScreenTransition.CoverRight);
+Clear(MyPeople2);
